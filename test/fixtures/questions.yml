@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  event: one
+  prompt: MyString
+  question_type: MyString
+  options: MyText
+  position: 1
+
+two:
+  event: two
+  prompt: MyString
+  question_type: MyString
+  options: MyText
+  position: 1

@@ -1,0 +1,9 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  respondent: one
+  event_time_slot: one
+
+two:
+  respondent: two
+  event_time_slot: two
