@@ -56,23 +56,26 @@ class EventsController < ApplicationController
   def build_time_slots
     slots = params.dig(:event, :time_slots) || []
     slots.each do |slot|
-      next if slot[:starts_at].blank?
-      @event.event_time_slots.build(
-        starts_at: slot[:starts_at],
-        ends_at: slot[:ends_at].presence
-      )
+      date = slot[:date]
+      start_time = slot[:start_time]
+      next if date.blank? || start_time.blank?
+
+      starts_at = Time.zone.parse("#{date} #{start_time}")
+      ends_at = slot[:end_time].present? ? Time.zone.parse("#{date} #{slot[:end_time]}") : nil
+
+      @event.event_time_slots.build(starts_at: starts_at, ends_at: ends_at)
     end
   end
 
   def build_questions
-    questions = params.dig(:event, :questions_attributes) || []
-    questions.each_with_index do |q, i|
+    questions = params.dig(:event, :questions_attributes) || {}
+    questions.each do |index, q|
       next if q[:prompt].blank?
       @event.questions.build(
         prompt: q[:prompt],
         question_type: q[:question_type] || "free_text",
         options: q[:options]&.reject(&:blank?),
-        position: i
+        position: index.to_i
       )
     end
   end

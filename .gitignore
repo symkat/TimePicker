@@ -30,3 +30,7 @@
 /node_modules
 
 /vendor/bundle
+
+# Test artifacts
+/test-results/
+/e2e/

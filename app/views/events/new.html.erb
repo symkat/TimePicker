@@ -1,11 +1,11 @@
 <div class="max-w-2xl mx-auto">
-  <h1 class="text-2xl font-bold text-gray-900 mb-6">Create a New Event</h1>
+  <h1 class="text-2xl font-bold text-gray-900 mb-8">Create a New Event</h1>
 
-  <%= form_with(model: @event, url: events_path, class: "space-y-8", data: { controller: "event-form" }) do |f| %>
+  <%= form_with(model: @event, url: events_path, class: "space-y-8", data: { controller: "event-form timezone" }) do |f| %>
     <% if @event.errors.any? %>
-      <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div class="bg-red-50 border border-red-200 rounded-lg p-5">
         <h3 class="text-red-800 font-semibold mb-2">Please fix the following:</h3>
-        <ul class="list-disc list-inside text-red-700 text-sm">
+        <ul class="list-disc list-inside text-red-700 text-sm space-y-1">
           <% @event.errors.full_messages.each do |msg| %>
             <li><%= msg %></li>
           <% end %>
@@ -14,76 +14,82 @@
     <% end %>
 
     <!-- Event Details -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 space-y-5">
       <h2 class="text-lg font-semibold text-gray-900">Event Details</h2>
 
       <div>
-        <%= f.label :title, class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_field :title, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500", placeholder: "e.g., Team Dinner" %>
+        <%= f.label :title, class: "block text-sm font-medium text-gray-700 mb-1.5" %>
+        <%= f.text_field :title, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-4 py-2.5", placeholder: "e.g., Team Dinner" %>
       </div>
 
       <div>
-        <%= f.label :description, class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <%= f.text_area :description, rows: 3, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500", placeholder: "Optional description..." %>
+        <%= f.label :description, class: "block text-sm font-medium text-gray-700 mb-1.5" %>
+        <%= f.text_area :description, rows: 3, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-4 py-2.5", placeholder: "Optional description..." %>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <%= f.label :location, class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= f.text_field :location, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500", placeholder: "e.g., Joe's Pizza" %>
-        </div>
-        <div>
-          <%= f.label :timezone, class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= f.time_zone_select :timezone, nil, { default: "Eastern Time (US & Canada)" }, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" %>
-        </div>
+      <div>
+        <%= f.label :location, class: "block text-sm font-medium text-gray-700 mb-1.5" %>
+        <%= f.text_field :location, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-4 py-2.5", placeholder: "e.g., Joe's Pizza" %>
       </div>
+
+      <!-- Hidden timezone field, auto-detected by Stimulus -->
+      <%= f.hidden_field :timezone, data: { timezone_target: "field" } %>
     </div>
 
     <!-- Time Slots -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6" data-controller="time-slots">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">When might this happen?</h2>
-      <p class="text-sm text-gray-500 mb-4">Add one or more date/time options for your friends to choose from.</p>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8" data-controller="time-slots">
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">When might this happen?</h2>
+      <p class="text-sm text-gray-500 mb-6">Add one or more date and time options for your friends to choose from.</p>
 
-      <div data-time-slots-target="container" class="space-y-3">
+      <div data-time-slots-target="container" class="space-y-4">
         <!-- Initial slot -->
-        <div class="flex items-center gap-3 time-slot-row" data-time-slots-target="row">
-          <div class="flex-1">
-            <input type="datetime-local" name="event[time_slots][][starts_at]"
-                   class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" required>
+        <div class="border border-gray-200 rounded-lg p-5 bg-gray-50 time-slot-row" data-time-slots-target="row">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-medium text-gray-700">Option 1</span>
+            <button type="button" data-action="time-slots#remove" class="text-red-400 hover:text-red-600 text-sm font-medium" title="Remove">Remove</button>
           </div>
-          <span class="text-gray-400 text-sm">to</span>
-          <div class="flex-1">
-            <input type="datetime-local" name="event[time_slots][][ends_at]"
-                   class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Date</label>
+              <input type="date" name="event[time_slots][][date]"
+                     class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm" required>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">Start time</label>
+              <input type="time" name="event[time_slots][][start_time]"
+                     class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm" required>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">End time <span class="text-gray-400">(optional)</span></label>
+              <input type="time" name="event[time_slots][][end_time]"
+                     class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm">
+            </div>
           </div>
-          <button type="button" data-action="time-slots#remove" class="text-red-400 hover:text-red-600 p-1" title="Remove">
-            &#10005;
-          </button>
         </div>
       </div>
 
       <button type="button" data-action="time-slots#add"
-              class="mt-4 inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 font-medium">
-        &#43; Add another time option
+              class="mt-5 inline-flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-700 font-semibold px-4 py-2 rounded-lg hover:bg-indigo-50 transition-colors">
+        + Add another time option
       </button>
     </div>
 
     <!-- Questions -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6" data-controller="questions">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Questions <span class="text-gray-400 font-normal text-sm">(optional)</span></h2>
-      <p class="text-sm text-gray-500 mb-4">Ask your friends anything — what to bring, food preferences, etc.</p>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8" data-controller="questions">
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">Questions <span class="text-gray-400 font-normal text-sm">(optional)</span></h2>
+      <p class="text-sm text-gray-500 mb-6">Ask your friends anything — what to bring, food preferences, etc.</p>
 
       <div data-questions-target="container" class="space-y-4"></div>
 
       <button type="button" data-action="questions#add"
-              class="mt-4 inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 font-medium">
-        &#43; Add a question
+              class="mt-2 inline-flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-700 font-semibold px-4 py-2 rounded-lg hover:bg-indigo-50 transition-colors">
+        + Add a question
       </button>
     </div>
 
     <!-- Submit -->
-    <div class="flex justify-end">
-      <%= f.submit "Create Event", class: "bg-indigo-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer" %>
+    <div class="flex justify-end pb-4">
+      <%= f.submit "Create Event", class: "bg-indigo-600 text-white font-semibold px-10 py-3 rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer text-base" %>
     </div>
   <% end %>
 </div>
