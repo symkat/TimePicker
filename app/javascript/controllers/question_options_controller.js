@@ -19,7 +19,7 @@ export default class extends Controller {
     const template = `
       <input type="text" name="${existingName}"
              placeholder="Option ${index}"
-             class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+             class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm">
     `
     this.optionsListTarget.insertAdjacentHTML("beforeend", template)
   }
