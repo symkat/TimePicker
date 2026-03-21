@@ -99,3 +99,4 @@ Events use `share_token` (8-char alphanumeric) in URLs, not numeric IDs.
 
 - Linting: `rubocop-rails-omakase` (config in `.rubocop.yml`)
 - Security scanning: `brakeman`, `bundler-audit`
+- **Before committing:** Always run `bundle exec rubocop` and `bin/rails test` to catch lint and test failures. Fix any issues before creating the commit.
