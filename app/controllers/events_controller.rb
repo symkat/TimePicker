@@ -1,6 +1,6 @@
 class EventsController < ApplicationController
-  before_action :set_event, only: [:show, :edit, :update, :claim]
-  before_action :require_creator, only: [:edit, :update]
+  before_action :set_event, only: [ :show, :edit, :update, :claim ]
+  before_action :require_creator, only: [ :edit, :update ]
 
   def new
     @event = Event.new

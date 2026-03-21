@@ -1,9 +1,9 @@
 class ResponsesController < ApplicationController
   before_action :set_event
-  before_action :set_respondent, only: [:edit, :update, :destroy]
+  before_action :set_respondent, only: [ :edit, :update, :destroy ]
   # Having the edit_token in the URL is sufficient authorization for edit/update.
   # The token is a 32-char secret — if you have it, you're allowed.
-  before_action :require_creator, only: [:destroy]
+  before_action :require_creator, only: [ :destroy ]
 
   def create
     @respondent = @event.respondents.build(name: params[:respondent][:name])

@@ -7,6 +7,6 @@ class CreateTimeSlotSelections < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :time_slot_selections, [:respondent_id, :event_time_slot_id], unique: true, name: "idx_time_slot_selections_unique"
+    add_index :time_slot_selections, [ :respondent_id, :event_time_slot_id ], unique: true, name: "idx_time_slot_selections_unique"
   end
 end

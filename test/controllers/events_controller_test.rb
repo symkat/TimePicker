@@ -43,7 +43,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "creator session is set on event creation" do
     post events_path, params: {
-      event: { title: "New Event", timezone: "Eastern Time (US & Canada)" },
+      event: { title: "New Event", timezone: "Eastern Time (US & Canada)" }
     }
 
     # Follow redirect to show page

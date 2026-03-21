@@ -3,11 +3,11 @@ Rails.application.routes.draw do
 
   root "pages#home"
 
-  resources :events, only: [:new, :create, :show, :edit, :update], param: :share_token do
+  resources :events, only: [ :new, :create, :show, :edit, :update ], param: :share_token do
     member do
       get :claim
     end
-    resources :responses, only: [:create], param: :edit_token, controller: "responses" do
+    resources :responses, only: [ :create ], param: :edit_token, controller: "responses" do
       member do
         get :edit
         patch :update
