@@ -1,17 +1,15 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
-
 one:
-  title: MyString
-  description: MyText
-  location: MyString
-  timezone: MyString
-  share_token: MyString
-  creator_token: MyString
+  title: Game Night
+  description: Bring your favorites
+  location: Community Center
+  timezone: Eastern Time (US & Canada)
+  share_token: abcd1234
+  creator_token: <%= SecureRandom.hex(32) %>
 
 two:
-  title: MyString
-  description: MyText
-  location: MyString
-  timezone: MyString
-  share_token: MyString
-  creator_token: MyString
+  title: Team Standup
+  description: Weekly sync
+  location: Zoom
+  timezone: Pacific Time (US & Canada)
+  share_token: efgh5678
+  creator_token: <%= SecureRandom.hex(32) %>

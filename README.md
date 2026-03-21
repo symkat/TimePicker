@@ -12,16 +12,18 @@ Think Doodle or When2meet, but simple and self-hosted.
 - **Poll questions** — ask free-text or multiple-choice questions alongside availability
 - **Availability grid** — see at a glance who can make which time, with the best option highlighted
 - **Auto timezone detection** — the creator's timezone is detected automatically via the browser
-- **Creator editing** — the event creator can edit event details from the same browser session
+- **Creator editing** — the event creator can edit event details; a persistent creator link allows access from any device
+- **Respondent editing** — respondents get a personal edit link to update their response from any browser
 - **Mobile friendly** — responsive design works on phones and tablets
 
 ## How It Works
 
 1. A user visits the app and creates an event, adding possible dates/times and optional questions
-2. The app generates a unique shareable link (e.g., `/events/xK9mP2a3`)
+2. The app generates a unique shareable link (e.g., `/events/xK9mP2a3`) and a creator link for managing the event from any device
 3. Friends open the link, enter their name, check the time slots that work, answer any questions, and submit
 4. Everyone can see the availability grid update with each new response
 5. The time slot with the most votes is highlighted
+6. Respondents can edit their response via their personal edit link; creators can manage all responses via their creator link
 
 ## Tech Stack
 
@@ -45,8 +47,9 @@ Event
 ```
 
 - **Events** are identified publicly by an 8-character `share_token` (never the numeric ID)
-- **Creator access** is managed via a `creator_token` stored in the browser session
-- **Respondents** are anonymous — they just enter a name, no login required
+- **Creator access** is managed via a `creator_token` — stored in the browser session, but can be restored via a claim link (`/events/:share_token/claim?token=...`)
+- **Respondent access** is managed via an `edit_token` on each respondent — embedded in edit URLs so respondents can update their response from any browser
+- **No accounts** — neither creators nor respondents need to sign up
 
 ## Project Structure
 
@@ -87,7 +90,11 @@ scripts/
 | GET | `/events/:share_token` | View event + respond |
 | GET | `/events/:share_token/edit` | Edit event (creator only) |
 | PATCH | `/events/:share_token` | Update event (creator only) |
+| GET | `/events/:share_token/claim` | Restore creator session via token |
 | POST | `/events/:share_token/responses` | Submit a response |
+| GET | `/events/:share_token/responses/:edit_token/edit` | Edit a response |
+| PATCH | `/events/:share_token/responses/:edit_token` | Update a response |
+| DELETE | `/events/:share_token/responses/:edit_token` | Remove a response (creator only) |
 
 ## Installation on Sprite
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_20_225459) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_21_004957) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -59,9 +59,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_20_225459) do
 
   create_table "respondents", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.string "edit_token", null: false
     t.bigint "event_id", null: false
     t.string "name"
     t.datetime "updated_at", null: false
+    t.index ["edit_token"], name: "index_respondents_on_edit_token", unique: true
     t.index ["event_id"], name: "index_respondents_on_event_id"
   end
 

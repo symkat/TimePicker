@@ -1,0 +1,71 @@
+<div class="max-w-2xl mx-auto">
+  <h1 class="text-2xl font-bold text-gray-900 mb-2">Edit Your Response</h1>
+  <p class="text-gray-500 mb-8">Update your availability for <strong><%= @event.title %></strong></p>
+
+  <%= form_with(url: event_response_path(@event, @respondent), method: :patch, class: "space-y-6") do |f| %>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 space-y-6">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Your Name</label>
+        <input type="text" name="respondent[name]" required
+               value="<%= @respondent.name %>"
+               class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-4 py-2.5"
+               placeholder="Enter your name">
+      </div>
+
+      <!-- Time Slot Checkboxes -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-3">When are you available? <span class="text-gray-400">(check all that apply)</span></label>
+        <div class="space-y-2">
+          <% @time_slots.each do |slot| %>
+            <label class="flex items-center gap-4 p-4 rounded-lg border border-gray-200 hover:bg-indigo-50 hover:border-indigo-200 cursor-pointer transition-colors">
+              <input type="checkbox" name="respondent[time_slot_ids][]" value="<%= slot.id %>"
+                     <%= "checked" if @selected_slot_ids.include?(slot.id) %>
+                     class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-5 w-5">
+              <span class="text-sm text-gray-900">
+                <strong><%= slot.starts_at.in_time_zone(@event.timezone).strftime("%A, %B %-d") %></strong>
+                <span class="text-gray-500">&middot;</span>
+                <%= slot.starts_at.in_time_zone(@event.timezone).strftime("%-I:%M %p") %>
+                <% if slot.ends_at.present? %>
+                  &ndash; <%= slot.ends_at.in_time_zone(@event.timezone).strftime("%-I:%M %p") %>
+                <% end %>
+              </span>
+            </label>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Questions -->
+      <% @questions.each do |question| %>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2"><%= question.prompt %></label>
+          <% answer = @answers_by_question[question.id] %>
+          <% if question.multiple_choice? && question.options.present? %>
+            <% selected_options = begin; answer&.value ? JSON.parse(answer.value) : []; rescue; []; end %>
+            <div class="space-y-2">
+              <% question.options.each do |option| %>
+                <label class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input type="checkbox" name="respondent[answers][<%= question.id %>][]" value="<%= option %>"
+                         <%= "checked" if selected_options.include?(option) %>
+                         class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-5 w-5">
+                  <span class="text-sm text-gray-700"><%= option %></span>
+                </label>
+              <% end %>
+            </div>
+          <% else %>
+            <input type="text" name="respondent[answers][<%= question.id %>]"
+                   value="<%= answer&.value %>"
+                   class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-4 py-2.5"
+                   placeholder="Your answer...">
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="flex justify-end gap-4 pt-2">
+        <%= link_to "Cancel", event_path(@event), class: "px-8 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 no-underline font-medium" %>
+        <button type="submit" class="bg-indigo-600 text-white font-semibold px-10 py-3 rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer text-base">
+          Update Response
+        </button>
+      </div>
+    </div>
+  <% end %>
+</div>
