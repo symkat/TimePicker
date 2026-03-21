@@ -110,7 +110,10 @@ class EventsController < ApplicationController
       next if date.blank? || start_time.blank?
 
       starts_at = Time.zone.parse("#{date} #{start_time}")
-      ends_at = slot[:end_time].present? ? Time.zone.parse("#{date} #{slot[:end_time]}") : nil
+      if slot[:end_time].present?
+        end_date = slot[:end_date].presence || date
+        ends_at = Time.zone.parse("#{end_date} #{slot[:end_time]}")
+      end
 
       @event.event_time_slots.build(starts_at: starts_at, ends_at: ends_at)
     end

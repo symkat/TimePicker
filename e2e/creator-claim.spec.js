@@ -42,7 +42,7 @@ test.describe('Creator Claim Link', () => {
     // Should be redirected to show page with creator access
     await expect(newPage.locator('text=Creator access restored')).toBeVisible();
     await expect(newPage.locator('a:has-text("Edit")')).toBeVisible();
-    await expect(newPage.locator('text=Your creator link:')).toBeVisible();
+    await expect(newPage.locator('text=Creator link:')).toBeVisible();
 
     await newContext.close();
   });

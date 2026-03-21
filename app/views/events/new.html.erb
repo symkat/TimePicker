@@ -1,4 +1,4 @@
-<div class="max-w-2xl mx-auto">
+<div class="max-w-4xl mx-auto">
   <h1 class="text-2xl font-bold text-gray-900 mb-8">Create a New Event</h1>
 
   <%= form_with(model: @event, url: events_path, class: "space-y-8", data: { controller: "event-form timezone" }) do |f| %>
@@ -36,42 +36,115 @@
       <%= f.hidden_field :timezone, data: { timezone_target: "field" } %>
     </div>
 
-    <!-- Time Slots -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8" data-controller="time-slots">
+    <!-- Date & Time Picker -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8" data-controller="date-time-picker">
       <h2 class="text-lg font-semibold text-gray-900 mb-2">When might this happen?</h2>
-      <p class="text-sm text-gray-500 mb-6">Add one or more date and time options for your friends to choose from.</p>
+      <p class="text-sm text-gray-500 mb-6">Click dates on the calendar, then set a time. All dates share the default time unless you customize one.</p>
 
-      <div data-time-slots-target="container" class="space-y-4">
-        <!-- Initial slot -->
-        <div class="border border-gray-200 rounded-lg p-5 bg-gray-50 time-slot-row" data-time-slots-target="row">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-sm font-medium text-gray-700">Option 1</span>
-            <button type="button" data-action="time-slots#remove" class="text-red-400 hover:text-red-600 text-sm font-medium" title="Remove">Remove</button>
+      <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Calendar -->
+        <div class="flex-shrink-0">
+          <!-- Month navigation -->
+          <div class="flex items-center justify-between mb-4">
+            <button type="button" data-action="click->date-time-picker#prevMonth"
+                    class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900 cursor-pointer">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <span data-date-time-picker-target="monthLabel" class="text-sm font-semibold text-gray-900"></span>
+            <button type="button" data-action="click->date-time-picker#nextMonth"
+                    class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900 cursor-pointer">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">Date</label>
-              <input type="date" name="event[time_slots][][date]"
-                     class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm" required>
+
+          <!-- Day-of-week headers -->
+          <div class="grid grid-cols-7 gap-1 mb-1">
+            <% %w[Su Mo Tu We Th Fr Sa].each do |day| %>
+              <div class="h-8 flex items-center justify-center text-xs font-medium text-gray-500 w-10"><%= day %></div>
+            <% end %>
+          </div>
+
+          <!-- Calendar grid -->
+          <div data-date-time-picker-target="calendar" class="grid grid-cols-7 gap-1"></div>
+        </div>
+
+        <!-- Time configuration + selected dates -->
+        <div class="flex-1 min-w-0">
+          <!-- Default time -->
+          <div class="bg-gray-50 rounded-lg p-4 mb-4">
+            <h3 class="text-sm font-medium text-gray-700 mb-3">Default Time</h3>
+            <div class="flex flex-wrap items-center gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 mb-1">Starts at</label>
+                <select data-date-time-picker-target="defaultStart"
+                        data-action="change->date-time-picker#defaultStartChanged"
+                        class="text-sm rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 pl-3 pr-8">
+                  <% (0..23).each do |h| %>
+                    <% (0..55).step(5).each do |m| %>
+                      <% val = "#{h.to_s.rjust(2, '0')}:#{m.to_s.rjust(2, '0')}" %>
+                      <% period = h >= 12 ? "PM" : "AM" %>
+                      <% hour12 = h == 0 ? 12 : h > 12 ? h - 12 : h %>
+                      <% label = "#{hour12}:#{m.to_s.rjust(2, '0')} #{period}" %>
+                      <option value="<%= val %>" <%= "selected" if val == "19:00" %>><%= label %></option>
+                    <% end %>
+                  <% end %>
+                </select>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" data-date-time-picker-target="endTimeToggle"
+                         data-action="change->date-time-picker#toggleEndTime"
+                         class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                  <span class="text-sm text-gray-600">Add end time</span>
+                </label>
+              </div>
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">Start time</label>
-              <input type="time" name="event[time_slots][][start_time]"
-                     class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm" required>
+
+            <div data-date-time-picker-target="endTimeWrapper" class="hidden mt-3">
+              <div class="flex items-center gap-3">
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">Ends at</label>
+                  <select data-date-time-picker-target="defaultEnd"
+                          data-action="change->date-time-picker#defaultEndChanged"
+                          class="text-sm rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 pl-3 pr-8">
+                    <option value="">--</option>
+                    <% (0..23).each do |h| %>
+                      <% (0..55).step(5).each do |m| %>
+                        <% val = "#{h.to_s.rjust(2, '0')}:#{m.to_s.rjust(2, '0')}" %>
+                        <% period = h >= 12 ? "PM" : "AM" %>
+                        <% hour12 = h == 0 ? 12 : h > 12 ? h - 12 : h %>
+                        <% label = "#{hour12}:#{m.to_s.rjust(2, '0')} #{period}" %>
+                        <option value="<%= val %>" <%= "selected" if val == "21:00" %>><%= label %></option>
+                      <% end %>
+                    <% end %>
+                  </select>
+                </div>
+                <div data-date-time-picker-target="overnightBadge" class="hidden mt-4">
+                  <span class="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
+                    &#9889; ends next day
+                  </span>
+                </div>
+              </div>
             </div>
-            <div>
-              <label class="block text-xs text-gray-500 mb-1">End time <span class="text-gray-400">(optional)</span></label>
-              <input type="time" name="event[time_slots][][end_time]"
-                     class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm">
+          </div>
+
+          <!-- Selected dates list -->
+          <div>
+            <h3 class="text-sm font-medium text-gray-700 mb-3">Selected Dates</h3>
+            <div data-date-time-picker-target="selectedList" class="divide-y divide-gray-100">
+              <p class="text-sm text-gray-400 italic">Click dates on the calendar to add time options.</p>
             </div>
           </div>
         </div>
       </div>
 
-      <button type="button" data-action="time-slots#add"
-              class="mt-5 inline-flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-700 font-semibold px-4 py-2 rounded-lg hover:bg-indigo-50 transition-colors">
-        + Add another time option
-      </button>
+      <!-- Hidden inputs container -->
+      <div data-date-time-picker-target="hiddenInputs"></div>
     </div>
 
     <!-- Questions -->

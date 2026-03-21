@@ -62,13 +62,13 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
     get event_path(@event)
     assert_response :success
-    assert_select "span", text: "Your creator link:"
+    assert_select "span", text: "Creator link:"
   end
 
   test "show page hides creator link for non-creator" do
     get event_path(@event)
     assert_response :success
-    assert_select "span", text: "Your creator link:", count: 0
+    assert_select "span", text: "Creator link:", count: 0
   end
 
   # --- edit/update authorization ---
