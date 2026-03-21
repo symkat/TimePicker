@@ -20,6 +20,7 @@ export default class extends Controller {
                   data-action="question-options#toggleType"
                   class="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 text-sm">
             <option value="free_text">Free text</option>
+            <option value="single_choice">Single choice</option>
             <option value="multiple_choice">Multiple choice</option>
           </select>
         </div>

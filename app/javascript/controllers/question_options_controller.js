@@ -4,7 +4,7 @@ export default class extends Controller {
   static targets = ["optionsArea", "optionsList"]
 
   toggleType(event) {
-    if (event.target.value === "multiple_choice") {
+    if (event.target.value === "multiple_choice" || event.target.value === "single_choice") {
       this.optionsAreaTarget.classList.remove("hidden")
     } else {
       this.optionsAreaTarget.classList.add("hidden")
