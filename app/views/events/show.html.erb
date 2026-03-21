@@ -53,6 +53,37 @@
           </div>
         </div>
       <% end %>
+    <% elsif @my_respondent && !@is_creator %>
+      <!-- Respondent: show edit link instead of share link -->
+      <% just_responded = flash[:notice]&.include?("Thanks,") %>
+      <% if just_responded %>
+        <div class="mt-6 p-6 bg-indigo-50 rounded-lg space-y-3" data-controller="clipboard">
+          <h2 class="text-base font-semibold text-indigo-900">Save your edit link:</h2>
+          <p class="text-sm text-indigo-700">Use this link to update your response from any device or browser.</p>
+          <div class="flex items-center gap-3">
+            <code class="text-sm bg-white px-4 py-2.5 rounded border border-indigo-200 text-indigo-900 flex-1 select-all break-all"><%= request.base_url %><%= edit_event_response_path(@event, @my_respondent) %></code>
+            <button type="button"
+                    data-action="clipboard#copy"
+                    data-clipboard-value-param="<%= request.base_url %><%= edit_event_response_path(@event, @my_respondent) %>"
+                    class="text-sm bg-indigo-600 text-white font-medium px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer whitespace-nowrap">
+              Copy
+            </button>
+          </div>
+        </div>
+      <% else %>
+        <div class="mt-6 flex flex-col gap-2">
+          <div class="p-3 bg-indigo-50 rounded-lg flex items-center gap-3" data-controller="clipboard">
+            <span class="text-sm text-indigo-700 font-medium whitespace-nowrap">Your edit link:</span>
+            <code class="text-xs bg-white px-3 py-1.5 rounded border border-indigo-200 text-indigo-900 flex-1 select-all break-all truncate"><%= request.base_url %><%= edit_event_response_path(@event, @my_respondent) %></code>
+            <button type="button"
+                    data-action="clipboard#copy"
+                    data-clipboard-value-param="<%= request.base_url %><%= edit_event_response_path(@event, @my_respondent) %>"
+                    class="text-xs text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer whitespace-nowrap">
+              Copy
+            </button>
+          </div>
+        </div>
+      <% end %>
     <% else %>
       <!-- Compact links (return visit) -->
       <div class="mt-6 flex flex-col gap-2">

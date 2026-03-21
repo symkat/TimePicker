@@ -25,6 +25,7 @@ class EventsController < ApplicationController
     @questions = @event.questions.order(:position)
     @is_creator = session["creator_token_#{@event.share_token}"] == @event.creator_token
     @my_respondent_token = session["respondent_token_#{@event.share_token}"]
+    @my_respondent = @event.respondents.find_by(edit_token: @my_respondent_token) if @my_respondent_token
   end
 
   def claim
