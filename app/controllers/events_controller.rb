@@ -104,15 +104,16 @@ class EventsController < ApplicationController
 
   def build_time_slots
     slots = params.dig(:event, :time_slots) || []
+    tz = ActiveSupport::TimeZone[@event.timezone] || Time.zone
     slots.each do |slot|
       date = slot[:date]
       start_time = slot[:start_time]
       next if date.blank? || start_time.blank?
 
-      starts_at = Time.zone.parse("#{date} #{start_time}")
+      starts_at = tz.parse("#{date} #{start_time}")
       if slot[:end_time].present?
         end_date = slot[:end_date].presence || date
-        ends_at = Time.zone.parse("#{end_date} #{slot[:end_time]}")
+        ends_at = tz.parse("#{end_date} #{slot[:end_time]}")
       end
 
       @event.event_time_slots.build(starts_at: starts_at, ends_at: ends_at)
