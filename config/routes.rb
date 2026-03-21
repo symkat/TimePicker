@@ -6,6 +6,9 @@ Rails.application.routes.draw do
   resources :events, only: [ :new, :create, :show, :edit, :update ], param: :share_token do
     member do
       get :claim
+      post :finalize
+      delete :unfinalize
+      get :calendar
     end
     resources :responses, only: [ :create ], param: :edit_token, controller: "responses" do
       member do

@@ -2,6 +2,7 @@ class Event < ApplicationRecord
   has_many :event_time_slots, dependent: :destroy
   has_many :questions, -> { order(:position) }, dependent: :destroy
   has_many :respondents, dependent: :destroy
+  belongs_to :selected_time_slot, class_name: "EventTimeSlot", optional: true
 
   validates :title, presence: true
   validates :share_token, presence: true, uniqueness: true
@@ -12,6 +13,18 @@ class Event < ApplicationRecord
 
   def to_param
     share_token
+  end
+
+  def finalized?
+    finalized_at.present?
+  end
+
+  def finalize!(time_slot)
+    update!(selected_time_slot: time_slot, finalized_at: Time.current)
+  end
+
+  def unfinalize!
+    update!(selected_time_slot: nil, finalized_at: nil)
   end
 
   private

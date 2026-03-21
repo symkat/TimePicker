@@ -1,6 +1,6 @@
 class EventsController < ApplicationController
-  before_action :set_event, only: [ :show, :edit, :update, :claim ]
-  before_action :require_creator, only: [ :edit, :update ]
+  before_action :set_event, only: [ :show, :edit, :update, :claim, :finalize, :unfinalize, :calendar ]
+  before_action :require_creator, only: [ :edit, :update, :finalize, :unfinalize ]
 
   def new
     @event = Event.new
@@ -34,6 +34,45 @@ class EventsController < ApplicationController
     else
       redirect_to event_path(@event), alert: "Invalid creator link."
     end
+  end
+
+  def finalize
+    time_slot = @event.event_time_slots.find(params[:time_slot_id])
+    @event.finalize!(time_slot)
+    redirect_to event_path(@event), notice: "Event finalized! Calendar links are now available."
+  end
+
+  def unfinalize
+    @event.unfinalize!
+    redirect_to event_path(@event), notice: "Event reopened for new responses."
+  end
+
+  def calendar
+    unless @event.finalized?
+      redirect_to event_path(@event), alert: "Event has not been finalized yet."
+      return
+    end
+
+    slot = @event.selected_time_slot
+    tz = ActiveSupport::TimeZone[@event.timezone] || ActiveSupport::TimeZone["UTC"]
+    starts_at = slot.starts_at
+    ends_at = slot.ends_at || (starts_at + 1.hour)
+
+    cal = <<~ICS
+      BEGIN:VCALENDAR
+      VERSION:2.0
+      PRODID:-//TimePicker//EN
+      BEGIN:VEVENT
+      DTSTART:#{starts_at.utc.strftime("%Y%m%dT%H%M%SZ")}
+      DTEND:#{ends_at.utc.strftime("%Y%m%dT%H%M%SZ")}
+      SUMMARY:#{@event.title}
+      DESCRIPTION:#{@event.description.to_s.gsub("\n", "\\n")}
+      LOCATION:#{@event.location}
+      END:VEVENT
+      END:VCALENDAR
+    ICS
+
+    send_data cal.gsub(/^ +/, ""), filename: "#{@event.title.parameterize}.ics", type: "text/calendar", disposition: "attachment"
   end
 
   def edit

@@ -43,12 +43,13 @@ sprite-env services stop rails
 ## Data Model
 
 ```
-Event (title, description, location, timezone, share_token, creator_token)
+Event (title, description, location, timezone, share_token, creator_token, finalized_at, selected_time_slot_id)
 ├── has_many EventTimeSlot (starts_at, ends_at)
 │   └── has_many TimeSlotSelection (join: respondent ↔ time_slot)
+├── belongs_to :selected_time_slot (optional, set on finalization)
 ├── has_many Question (prompt, question_type [free_text|multiple_choice], options JSON, position)
 │   └── has_many Answer (value)
-└── has_many Respondent (name)
+└── has_many Respondent (name, edit_token)
     ├── has_many TimeSlotSelection
     └── has_many Answer
 ```
@@ -59,7 +60,10 @@ Event (title, description, location, timezone, share_token, creator_token)
 root "pages#home"
 resources :events, only: [:new, :create, :show, :edit, :update], param: :share_token do
   member do
-    get :claim  # Restore creator session via token param
+    get :claim       # Restore creator session via token param
+    post :finalize   # Lock event to a chosen time slot (creator only)
+    delete :unfinalize  # Reopen event (creator only)
+    get :calendar    # Download .ics file (finalized events only)
   end
   resources :responses, only: [:create], param: :edit_token, controller: "responses" do
     member do
@@ -80,6 +84,7 @@ Events use `share_token` (8-char alphanumeric) in URLs, not numeric IDs.
 - **Timezone:** Auto-detected from browser via Stimulus controller, normalized to Rails timezone on the Event model.
 - **Dynamic forms:** Stimulus controllers (`time_slots`, `questions`, `question_options`, `timezone`) handle adding/removing form rows client-side.
 - **Multiple-choice answers:** Stored as JSON arrays in the `value` column of `answers`.
+- **Finalization:** Creator picks a winning time slot, which sets `finalized_at` and `selected_time_slot_id`. New responses are blocked; existing respondents can still edit. Generates ICS download and Google Calendar link.
 
 ## File Layout (key files)
 

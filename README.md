@@ -14,6 +14,8 @@ Think Doodle or When2meet, but simple and self-hosted.
 - **Auto timezone detection** — the creator's timezone is detected automatically via the browser
 - **Creator editing** — the event creator can edit event details; a persistent creator link allows access from any device
 - **Respondent editing** — respondents get a personal edit link to update their response from any browser
+- **Finalize events** — creator picks the winning time slot; new responses are locked, existing respondents can still edit
+- **Calendar integration** — after finalizing, download an .ics file or add directly to Google Calendar
 - **Mobile friendly** — responsive design works on phones and tablets
 
 ## How It Works
@@ -24,6 +26,7 @@ Think Doodle or When2meet, but simple and self-hosted.
 4. Everyone can see the availability grid update with each new response
 5. The time slot with the most votes is highlighted
 6. Respondents can edit their response via their personal edit link; creators can manage all responses via their creator link
+7. When ready, the creator finalizes the event by choosing a time slot — calendar links become available for everyone
 
 ## Tech Stack
 
@@ -91,6 +94,9 @@ scripts/
 | GET | `/events/:share_token/edit` | Edit event (creator only) |
 | PATCH | `/events/:share_token` | Update event (creator only) |
 | GET | `/events/:share_token/claim` | Restore creator session via token |
+| POST | `/events/:share_token/finalize` | Finalize event with chosen time slot (creator only) |
+| DELETE | `/events/:share_token/unfinalize` | Reopen event for new responses (creator only) |
+| GET | `/events/:share_token/calendar` | Download .ics calendar file (finalized only) |
 | POST | `/events/:share_token/responses` | Submit a response |
 | GET | `/events/:share_token/responses/:edit_token/edit` | Edit a response |
 | PATCH | `/events/:share_token/responses/:edit_token` | Update a response |

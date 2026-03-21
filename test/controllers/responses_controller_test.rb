@@ -66,4 +66,39 @@ class ResponsesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to event_path(@event)
   end
+
+  # --- finalization locking ---
+
+  test "create response blocked when event is finalized" do
+    @event.finalize!(@time_slot)
+
+    assert_no_difference "Respondent.count" do
+      post event_responses_path(@event.share_token), params: {
+        respondent: { name: "Blocked User", time_slot_ids: [ @time_slot.id ] }
+      }
+    end
+
+    assert_redirected_to event_path(@event)
+    follow_redirect!
+    assert_match /finalized/, flash[:alert]
+  end
+
+  test "edit response still works when event is finalized" do
+    @event.finalize!(@time_slot)
+
+    get edit_event_response_path(@event.share_token, @respondent.edit_token)
+    assert_response :success
+  end
+
+  test "update response still works when event is finalized" do
+    @event.finalize!(@time_slot)
+
+    patch event_response_path(@event.share_token, @respondent.edit_token), params: {
+      respondent: { name: "Alice Updated", time_slot_ids: [ @time_slot.id ] }
+    }
+
+    assert_redirected_to event_path(@event)
+    @respondent.reload
+    assert_equal "Alice Updated", @respondent.name
+  end
 end

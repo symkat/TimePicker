@@ -4,6 +4,7 @@ class ResponsesController < ApplicationController
   # Having the edit_token in the URL is sufficient authorization for edit/update.
   # The token is a 32-char secret — if you have it, you're allowed.
   before_action :require_creator, only: [ :destroy ]
+  before_action :require_not_finalized, only: [ :create ]
 
   def create
     @respondent = @event.respondents.build(name: params[:respondent][:name])
@@ -69,6 +70,12 @@ class ResponsesController < ApplicationController
 
   def is_creator?
     session["creator_token_#{@event.share_token}"] == @event.creator_token
+  end
+
+  def require_not_finalized
+    if @event.finalized?
+      redirect_to event_path(@event), alert: "This event has been finalized and is no longer accepting new responses."
+    end
   end
 
   def save_selections(respondent)

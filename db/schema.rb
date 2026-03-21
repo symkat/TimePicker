@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_21_004957) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_21_020755) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -38,11 +38,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_21_004957) do
     t.datetime "created_at", null: false
     t.string "creator_token", null: false
     t.text "description"
+    t.datetime "finalized_at"
     t.string "location"
+    t.bigint "selected_time_slot_id"
     t.string "share_token", null: false
     t.string "timezone"
     t.string "title"
     t.datetime "updated_at", null: false
+    t.index ["selected_time_slot_id"], name: "index_events_on_selected_time_slot_id"
     t.index ["share_token"], name: "index_events_on_share_token", unique: true
   end
 
@@ -80,6 +83,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_21_004957) do
   add_foreign_key "answers", "questions"
   add_foreign_key "answers", "respondents"
   add_foreign_key "event_time_slots", "events"
+  add_foreign_key "events", "event_time_slots", column: "selected_time_slot_id"
   add_foreign_key "questions", "events"
   add_foreign_key "respondents", "events"
   add_foreign_key "time_slot_selections", "event_time_slots"

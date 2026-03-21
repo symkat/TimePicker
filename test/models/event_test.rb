@@ -38,4 +38,28 @@ class EventTest < ActiveSupport::TestCase
     event = events(:one)
     assert_equal event.share_token, event.to_param
   end
+
+  test "finalize! sets finalized_at and selected_time_slot" do
+    event = events(:one)
+    slot = event_time_slots(:one)
+    event.finalize!(slot)
+    assert event.finalized?
+    assert_equal slot, event.selected_time_slot
+    assert event.finalized_at.present?
+  end
+
+  test "unfinalize! clears finalization" do
+    event = events(:one)
+    slot = event_time_slots(:one)
+    event.finalize!(slot)
+    event.unfinalize!
+    assert_not event.finalized?
+    assert_nil event.selected_time_slot
+    assert_nil event.finalized_at
+  end
+
+  test "finalized? returns false by default" do
+    event = events(:one)
+    assert_not event.finalized?
+  end
 end
