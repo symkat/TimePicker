@@ -1,20 +1,30 @@
 import { Controller } from "@hotwired/stimulus"
 
+const TYPE_HINTS = {
+  free_text: "Respondents type their answer in a text field.",
+  single_choice: "Respondents pick one option from the list.",
+  multiple_choice: "Respondents can select multiple options from the list."
+}
+
 export default class extends Controller {
-  static targets = ["optionsArea", "optionsList"]
+  static targets = ["optionsArea", "optionsList", "typeHint"]
 
   toggleType(event) {
-    if (event.target.value === "multiple_choice" || event.target.value === "single_choice") {
+    const type = event.target.value
+    if (type === "multiple_choice" || type === "single_choice") {
       this.optionsAreaTarget.classList.remove("hidden")
     } else {
       this.optionsAreaTarget.classList.add("hidden")
+    }
+
+    if (this.hasTypeHintTarget) {
+      this.typeHintTarget.textContent = TYPE_HINTS[type] || ""
     }
   }
 
   addOption() {
     const inputs = this.optionsListTarget.querySelectorAll("input")
     const index = inputs.length + 1
-    // Derive the correct name from existing inputs
     const existingName = inputs[0]?.name || ""
     const template = `
       <input type="text" name="${existingName}"
