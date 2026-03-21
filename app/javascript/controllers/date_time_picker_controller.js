@@ -11,12 +11,223 @@ export default class extends Controller {
     this.currentYear = now.getFullYear()
     this.today = this.formatDate(now)
     this.selectedDates = new Set()
-    this.overrides = {} // { "2026-03-21": { startTime: "22:00", endTime: "02:00" } }
+    this.overrides = {}
     this.showEndTime = false
+    this._activeDropdown = null
 
     this.renderCalendar()
     this.renderSelectedList()
     this.updateOvernightBadge()
+    this._initComboboxes()
+
+    // Close dropdowns on outside click
+    this._outsideClickHandler = (e) => this._closeDropdownIfOutside(e)
+    document.addEventListener("click", this._outsideClickHandler)
+  }
+
+  disconnect() {
+    document.removeEventListener("click", this._outsideClickHandler)
+  }
+
+  // --- Time combobox ---
+
+  _initComboboxes() {
+    this.element.querySelectorAll("[data-time-combobox]").forEach(wrapper => {
+      this._setupCombobox(wrapper)
+    })
+  }
+
+  _setupCombobox(wrapper) {
+    const input = wrapper.querySelector("input")
+    const dropdown = wrapper.querySelector("[data-combobox-list]")
+    if (!input || !dropdown) return
+
+    // Populate dropdown with 15-minute intervals
+    dropdown.innerHTML = this._timeListItems(input.dataset.value || "")
+
+    input.addEventListener("focus", () => {
+      this._showDropdown(wrapper)
+      this._scrollToSelected(dropdown, input.dataset.value)
+    })
+
+    input.addEventListener("input", () => {
+      // Filter dropdown as user types
+      const query = input.value.toLowerCase().replace(/\s/g, "")
+      dropdown.querySelectorAll("[data-time-value]").forEach(item => {
+        const label = item.textContent.toLowerCase().replace(/\s/g, "")
+        item.style.display = label.includes(query) ? "" : "none"
+      })
+      this._showDropdown(wrapper)
+    })
+
+    input.addEventListener("blur", (e) => {
+      // Delay to allow dropdown click to register
+      setTimeout(() => {
+        this._parseAndSetTime(input)
+        this._hideDropdown(wrapper)
+      }, 200)
+    })
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault()
+        this._parseAndSetTime(input)
+        this._hideDropdown(wrapper)
+        input.blur()
+      } else if (e.key === "Escape") {
+        this._hideDropdown(wrapper)
+        input.blur()
+      }
+    })
+
+    dropdown.addEventListener("mousedown", (e) => {
+      const item = e.target.closest("[data-time-value]")
+      if (!item) return
+      e.preventDefault()
+      input.value = item.textContent
+      input.dataset.value = item.dataset.timeValue
+      this._hideDropdown(wrapper)
+      input.dispatchEvent(new Event("change", { bubbles: true }))
+    })
+  }
+
+  _timeListItems(selectedValue) {
+    let html = ""
+    for (let h = 0; h < 24; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        const val = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`
+        const label = this.formatTimeDisplay(val)
+        const isSelected = val === selectedValue
+        html += `<div data-time-value="${val}" class="px-3 py-1.5 text-sm cursor-pointer hover:bg-indigo-50 ${isSelected ? "bg-indigo-100 font-medium text-indigo-700" : "text-gray-700"}">${label}</div>`
+      }
+    }
+    return html
+  }
+
+  _showDropdown(wrapper) {
+    const dropdown = wrapper.querySelector("[data-combobox-list]")
+    dropdown.classList.remove("hidden")
+    this._activeDropdown = wrapper
+  }
+
+  _hideDropdown(wrapper) {
+    const dropdown = wrapper.querySelector("[data-combobox-list]")
+    dropdown.classList.add("hidden")
+    // Reset filter
+    dropdown.querySelectorAll("[data-time-value]").forEach(item => {
+      item.style.display = ""
+    })
+    if (this._activeDropdown === wrapper) this._activeDropdown = null
+  }
+
+  _scrollToSelected(dropdown, value) {
+    if (!value) return
+    const selected = dropdown.querySelector(`[data-time-value="${value}"]`)
+    if (selected) {
+      selected.scrollIntoView({ block: "center" })
+    }
+  }
+
+  _closeDropdownIfOutside(e) {
+    if (!this._activeDropdown) return
+    if (!this._activeDropdown.contains(e.target)) {
+      this._hideDropdown(this._activeDropdown)
+    }
+  }
+
+  _parseAndSetTime(input) {
+    const raw = input.value.trim()
+    if (!raw) {
+      input.dataset.value = ""
+      input.dispatchEvent(new Event("change", { bubbles: true }))
+      return
+    }
+
+    const parsed = this._parseTimeString(raw)
+    if (parsed) {
+      input.dataset.value = parsed
+      input.value = this.formatTimeDisplay(parsed)
+    } else {
+      // Revert to previous valid value
+      if (input.dataset.value) {
+        input.value = this.formatTimeDisplay(input.dataset.value)
+      } else {
+        input.value = ""
+      }
+    }
+    input.dispatchEvent(new Event("change", { bubbles: true }))
+  }
+
+  _parseTimeString(str) {
+    // Normalize: strip spaces, lowercase
+    let s = str.toLowerCase().replace(/\s+/g, "").replace(/\./g, "")
+
+    // Extract AM/PM
+    let isPM = null
+    if (s.includes("pm") || s.includes("p")) {
+      isPM = true
+      s = s.replace(/pm|p/g, "")
+    } else if (s.includes("am") || s.includes("a")) {
+      isPM = false
+      s = s.replace(/am|a/g, "")
+    }
+
+    let hours, minutes
+
+    // Try "H:MM" or "HH:MM"
+    const colonMatch = s.match(/^(\d{1,2}):(\d{2})$/)
+    if (colonMatch) {
+      hours = parseInt(colonMatch[1], 10)
+      minutes = parseInt(colonMatch[2], 10)
+    } else {
+      // Try bare numbers: "7" -> 7:00, "930" -> 9:30, "1030" -> 10:30
+      const numMatch = s.match(/^(\d{1,4})$/)
+      if (numMatch) {
+        const num = numMatch[1]
+        if (num.length <= 2) {
+          hours = parseInt(num, 10)
+          minutes = 0
+        } else if (num.length === 3) {
+          hours = parseInt(num[0], 10)
+          minutes = parseInt(num.slice(1), 10)
+        } else {
+          hours = parseInt(num.slice(0, 2), 10)
+          minutes = parseInt(num.slice(2), 10)
+        }
+      }
+    }
+
+    if (hours === undefined || minutes === undefined) return null
+    if (minutes < 0 || minutes > 59) return null
+
+    // Apply AM/PM conversion
+    if (isPM !== null) {
+      if (hours < 1 || hours > 12) return null
+      if (isPM && hours !== 12) hours += 12
+      if (!isPM && hours === 12) hours = 0
+    } else {
+      // No AM/PM specified — if hours <= 12 and > 0, treat ambiguously
+      // but allow 0-23 for 24h input
+      if (hours < 0 || hours > 23) return null
+    }
+
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
+  }
+
+  // Render a combobox HTML string
+  _comboboxHtml(name, value, extraClasses) {
+    const display = value ? this.formatTimeDisplay(value) : ""
+    const cls = extraClasses || ""
+    return `<div data-time-combobox class="relative ${cls}">
+      <input type="text" value="${display}" data-value="${value || ""}"
+             data-combobox-field="${name}"
+             autocomplete="off"
+             class="w-28 text-sm rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 pl-3 pr-2"
+             placeholder="7:00 PM">
+      <div data-combobox-list class="hidden absolute z-50 mt-1 w-36 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg">
+        ${this._timeListItems(value || "")}
+      </div>
+    </div>`
   }
 
   // --- Calendar rendering ---
@@ -35,7 +246,6 @@ export default class extends Controller {
 
     let html = ""
 
-    // Empty cells for days before the 1st
     for (let i = 0; i < firstDay; i++) {
       html += `<div class="h-10"></div>`
     }
@@ -101,13 +311,14 @@ export default class extends Controller {
 
   // --- Default time ---
 
-  defaultStartChanged() {
-    this.renderSelectedList()
-    this.updateOvernightBadge()
-    this.syncHiddenInputs()
-  }
-
-  defaultEndChanged() {
+  defaultTimeChanged(event) {
+    const input = event.target
+    const field = input.dataset.comboboxField
+    if (field === "defaultStart") {
+      this.defaultStartValue = input.dataset.value
+    } else if (field === "defaultEnd") {
+      this.defaultEndValue = input.dataset.value
+    }
     this.renderSelectedList()
     this.updateOvernightBadge()
     this.syncHiddenInputs()
@@ -117,8 +328,7 @@ export default class extends Controller {
     this.showEndTime = this.endTimeToggleTarget.checked
     this.endTimeWrapperTarget.classList.toggle("hidden", !this.showEndTime)
     if (!this.showEndTime) {
-      this.defaultEndTarget.value = ""
-      // Clear end times from overrides
+      this.defaultEndValue = ""
       for (const dateStr of Object.keys(this.overrides)) {
         delete this.overrides[dateStr].endTime
       }
@@ -130,8 +340,8 @@ export default class extends Controller {
 
   updateOvernightBadge() {
     if (!this.hasOvernightBadgeTarget) return
-    const start = this.defaultStartTarget.value
-    const end = this.defaultEndTarget.value
+    const start = this._getDefaultStart()
+    const end = this._getDefaultEnd()
     if (this.showEndTime && start && end && end < start) {
       this.overnightBadgeTarget.classList.remove("hidden")
     } else {
@@ -139,12 +349,23 @@ export default class extends Controller {
     }
   }
 
+  _getDefaultStart() {
+    // Read from combobox data-value if available, fallback to target
+    const input = this.element.querySelector('[data-combobox-field="defaultStart"]')
+    return input?.dataset?.value || this.defaultStartValue || "19:00"
+  }
+
+  _getDefaultEnd() {
+    const input = this.element.querySelector('[data-combobox-field="defaultEnd"]')
+    return input?.dataset?.value || this.defaultEndValue || ""
+  }
+
   // --- Per-date overrides ---
 
   customizeDate(event) {
     const dateStr = event.currentTarget.dataset.date
-    const start = this.defaultStartTarget.value || "19:00"
-    const end = this.defaultEndTarget.value || ""
+    const start = this._getDefaultStart()
+    const end = this._getDefaultEnd()
     this.overrides[dateStr] = this.overrides[dateStr] || { startTime: start, endTime: end }
     this.renderSelectedList()
   }
@@ -156,18 +377,17 @@ export default class extends Controller {
     this.syncHiddenInputs()
   }
 
-  overrideStartChanged(event) {
-    const dateStr = event.currentTarget.dataset.date
+  overrideTimeChanged(event) {
+    const input = event.target
+    const dateStr = input.closest("[data-override-date]")?.dataset?.overrideDate
+    const field = input.dataset.comboboxField
+    if (!dateStr) return
     if (!this.overrides[dateStr]) this.overrides[dateStr] = {}
-    this.overrides[dateStr].startTime = event.currentTarget.value
-    this.renderSelectedList()
-    this.syncHiddenInputs()
-  }
-
-  overrideEndChanged(event) {
-    const dateStr = event.currentTarget.dataset.date
-    if (!this.overrides[dateStr]) this.overrides[dateStr] = {}
-    this.overrides[dateStr].endTime = event.currentTarget.value
+    if (field === "overrideStart") {
+      this.overrides[dateStr].startTime = input.dataset.value
+    } else if (field === "overrideEnd") {
+      this.overrides[dateStr].endTime = input.dataset.value
+    }
     this.renderSelectedList()
     this.syncHiddenInputs()
   }
@@ -181,8 +401,8 @@ export default class extends Controller {
       return
     }
 
-    const defaultStart = this.defaultStartTarget.value || "19:00"
-    const defaultEnd = this.defaultEndTarget.value || ""
+    const defaultStart = this._getDefaultStart()
+    const defaultEnd = this._getDefaultEnd()
 
     let html = ""
     for (const dateStr of sorted) {
@@ -200,7 +420,6 @@ export default class extends Controller {
       const startDisplay = this.formatTimeDisplay(startTime)
       const endDisplay = endTime ? this.formatTimeDisplay(endTime) : ""
 
-      // Calculate next day name for overnight display
       let overnightLabel = ""
       if (isOvernight) {
         const nextDay = new Date(dateObj)
@@ -216,23 +435,17 @@ export default class extends Controller {
       html += `    <div class="text-sm font-medium text-gray-900">${dayName}, ${monthName} ${dayNum}</div>`
 
       if (isOverridden) {
-        // Show inline dropdowns for override
-        html += `<div class="flex flex-wrap items-center gap-2 mt-1.5">`
-        html += `  <select data-action="change->date-time-picker#overrideStartChanged" data-date="${dateStr}" class="text-sm rounded-md border-gray-300 py-1 pl-2 pr-7 focus:border-indigo-500 focus:ring-indigo-500">`
-        html += this.timeOptions(startTime)
-        html += `  </select>`
+        html += `<div class="flex flex-wrap items-center gap-2 mt-1.5" data-override-date="${dateStr}">`
+        html += this._comboboxHtml("overrideStart", startTime)
         if (this.showEndTime) {
           html += `<span class="text-gray-400 text-sm">to</span>`
-          html += `<select data-action="change->date-time-picker#overrideEndChanged" data-date="${dateStr}" class="text-sm rounded-md border-gray-300 py-1 pl-2 pr-7 focus:border-indigo-500 focus:ring-indigo-500">`
-          html += this.timeOptions(endTime)
-          html += `</select>`
+          html += this._comboboxHtml("overrideEnd", endTime)
         }
         html += `</div>`
         if (isOvernight) {
           html += `<div class="mt-1 flex items-center gap-1 text-xs text-amber-700"><span>&#9889;</span> ends ${overnightLabel}</div>`
         }
       } else {
-        // Show summary text
         let timeText = startDisplay
         if (this.showEndTime && endDisplay) {
           timeText += ` - ${endDisplay}`
@@ -244,8 +457,6 @@ export default class extends Controller {
       }
 
       html += `  </div>`
-
-      // Action buttons
       html += `<div class="flex items-center gap-2 ml-3 mt-0.5">`
       if (isOverridden) {
         html += `<button type="button" data-action="click->date-time-picker#resetOverride" data-date="${dateStr}" class="text-xs text-gray-500 hover:text-indigo-600">reset</button>`
@@ -254,11 +465,18 @@ export default class extends Controller {
       }
       html += `<button type="button" data-action="click->date-time-picker#removeDate" data-date="${dateStr}" class="text-xs text-red-400 hover:text-red-600">remove</button>`
       html += `</div>`
-
       html += `</div>`
     }
 
     this.selectedListTarget.innerHTML = html
+
+    // Wire up newly rendered comboboxes in the selected list
+    this.selectedListTarget.querySelectorAll("[data-time-combobox]").forEach(wrapper => {
+      this._setupCombobox(wrapper)
+      // Override comboboxes dispatch change -> overrideTimeChanged
+      const input = wrapper.querySelector("input")
+      input.addEventListener("change", (e) => this.overrideTimeChanged(e))
+    })
   }
 
   removeDate(event) {
@@ -274,8 +492,8 @@ export default class extends Controller {
 
   syncHiddenInputs() {
     const sorted = Array.from(this.selectedDates).sort()
-    const defaultStart = this.defaultStartTarget.value || "19:00"
-    const defaultEnd = this.defaultEndTarget.value || ""
+    const defaultStart = this._getDefaultStart()
+    const defaultEnd = this._getDefaultEnd()
 
     let html = ""
     for (const dateStr of sorted) {
@@ -285,7 +503,6 @@ export default class extends Controller {
 
       let endDate = dateStr
       if (endTime && endTime < startTime) {
-        // Overnight: end date is next day
         const d = new Date(dateStr + "T12:00:00")
         d.setDate(d.getDate() + 1)
         endDate = this.formatDate(d)
@@ -317,20 +534,5 @@ export default class extends Controller {
     const period = h >= 12 ? "PM" : "AM"
     const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h
     return `${hour12}:${String(m).padStart(2, "0")} ${period}`
-  }
-
-  timeOptions(selectedValue) {
-    let html = ""
-    for (let h = 0; h < 24; h++) {
-      for (let m = 0; m < 60; m += 5) {
-        const val = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`
-        const period = h >= 12 ? "PM" : "AM"
-        const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h
-        const label = `${hour12}:${String(m).padStart(2, "0")} ${period}`
-        const selected = val === selectedValue ? " selected" : ""
-        html += `<option value="${val}"${selected}>${label}</option>`
-      }
-    }
-    return html
   }
 }

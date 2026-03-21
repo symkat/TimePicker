@@ -119,9 +119,17 @@ test.describe('Event Creation', () => {
     await page.locator('[data-date-time-picker-target="endTimeToggle"]').check();
     await expect(page.locator('[data-date-time-picker-target="endTimeWrapper"]')).toBeVisible();
 
-    // Set start to 10 PM (22:00), end to 2 AM (02:00)
-    await page.locator('[data-date-time-picker-target="defaultStart"]').selectOption('22:00');
-    await page.locator('[data-date-time-picker-target="defaultEnd"]').selectOption('02:00');
+    // Set start to 10 PM via combobox
+    const startInput = page.locator('[data-combobox-field="defaultStart"]');
+    await startInput.click();
+    await startInput.fill('10:00 PM');
+    await startInput.press('Enter');
+
+    // Set end to 2 AM via combobox
+    const endInput = page.locator('[data-combobox-field="defaultEnd"]');
+    await endInput.click();
+    await endInput.fill('2:00 AM');
+    await endInput.press('Enter');
 
     // Overnight badge should appear
     await expect(page.locator('text=ends next day')).toBeVisible();

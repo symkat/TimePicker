@@ -80,19 +80,15 @@
             <div class="flex flex-wrap items-center gap-3">
               <div>
                 <label class="block text-xs text-gray-500 mb-1">Starts at</label>
-                <select data-date-time-picker-target="defaultStart"
-                        data-action="change->date-time-picker#defaultStartChanged"
-                        class="text-sm rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 pl-3 pr-8">
-                  <% (0..23).each do |h| %>
-                    <% (0..55).step(5).each do |m| %>
-                      <% val = "#{h.to_s.rjust(2, '0')}:#{m.to_s.rjust(2, '0')}" %>
-                      <% period = h >= 12 ? "PM" : "AM" %>
-                      <% hour12 = h == 0 ? 12 : h > 12 ? h - 12 : h %>
-                      <% label = "#{hour12}:#{m.to_s.rjust(2, '0')} #{period}" %>
-                      <option value="<%= val %>" <%= "selected" if val == "19:00" %>><%= label %></option>
-                    <% end %>
-                  <% end %>
-                </select>
+                <div data-time-combobox data-date-time-picker-target="defaultStart" class="relative">
+                  <input type="text" value="7:00 PM" data-value="19:00"
+                         data-combobox-field="defaultStart"
+                         data-action="change->date-time-picker#defaultTimeChanged"
+                         autocomplete="off"
+                         class="w-28 text-sm rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 pl-3 pr-2"
+                         placeholder="7:00 PM">
+                  <div data-combobox-list class="hidden absolute z-50 mt-1 w-36 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg"></div>
+                </div>
               </div>
 
               <div class="flex items-center gap-3">
@@ -109,20 +105,15 @@
               <div class="flex items-center gap-3">
                 <div>
                   <label class="block text-xs text-gray-500 mb-1">Ends at</label>
-                  <select data-date-time-picker-target="defaultEnd"
-                          data-action="change->date-time-picker#defaultEndChanged"
-                          class="text-sm rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 pl-3 pr-8">
-                    <option value="">--</option>
-                    <% (0..23).each do |h| %>
-                      <% (0..55).step(5).each do |m| %>
-                        <% val = "#{h.to_s.rjust(2, '0')}:#{m.to_s.rjust(2, '0')}" %>
-                        <% period = h >= 12 ? "PM" : "AM" %>
-                        <% hour12 = h == 0 ? 12 : h > 12 ? h - 12 : h %>
-                        <% label = "#{hour12}:#{m.to_s.rjust(2, '0')} #{period}" %>
-                        <option value="<%= val %>" <%= "selected" if val == "21:00" %>><%= label %></option>
-                      <% end %>
-                    <% end %>
-                  </select>
+                  <div data-time-combobox data-date-time-picker-target="defaultEnd" class="relative">
+                    <input type="text" value="9:00 PM" data-value="21:00"
+                           data-combobox-field="defaultEnd"
+                           data-action="change->date-time-picker#defaultTimeChanged"
+                           autocomplete="off"
+                           class="w-28 text-sm rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 pl-3 pr-2"
+                           placeholder="9:00 PM">
+                    <div data-combobox-list class="hidden absolute z-50 mt-1 w-36 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg"></div>
+                  </div>
                 </div>
                 <div data-date-time-picker-target="overnightBadge" class="hidden mt-4">
                   <span class="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
