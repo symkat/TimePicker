@@ -47,8 +47,11 @@ primary_region = "iad"      # pick your preferred region
 [build]
   dockerfile = "Dockerfile"
 
+[env]
+  HTTP_PORT = "3000"        # Thruster listens on this port
+
 [http_service]
-  internal_port = 80        # Thruster listens on 80
+  internal_port = 3000
   force_https = true
   auto_stop_machines = "stop"
   auto_start_machines = true
@@ -59,7 +62,7 @@ primary_region = "iad"      # pick your preferred region
   memory = "512mb"
 ```
 
-> **Note:** The Dockerfile uses Thruster (which wraps Puma and handles HTTP caching/compression), exposing port 80. Fly's proxy terminates TLS and forwards to port 80.
+> **Note:** The Dockerfile uses Thruster (which wraps Puma and handles HTTP caching/compression). The `HTTP_PORT` env var tells Thruster to listen on port 3000. Fly's proxy terminates TLS and forwards to that port.
 
 ## 3. Create a Managed Postgres cluster
 
@@ -87,8 +90,18 @@ This automatically:
 ## 5. Set secrets
 
 ```bash
-fly secrets set RAILS_MASTER_KEY=$(cat config/master.key) -a timepicker
+fly secrets set RAILS_MASTER_KEY="<your-master-key>" -a timepicker
 ```
+
+The master key lives in `config/master.key`, which is `.gitignored` and won't exist in a fresh clone. To get it:
+
+- **If you have access to the original development machine:** Copy the value from `config/master.key`.
+- **If the master key is lost:** You'll need to regenerate credentials from scratch:
+  ```bash
+  rm config/credentials.yml.enc           # delete the old (undecryptable) file
+  bin/rails credentials:edit              # generates a new master.key and credentials.yml.enc
+  ```
+  Then re-add any custom credentials your app needs (check `config/environments/production.rb` for references to `Rails.application.credentials`).
 
 `SECRET_KEY_BASE` is derived from the master key via `credentials.yml.enc`, so you don't need to set it separately. `DATABASE_URL` was already set by `fly mpg attach`.
 
